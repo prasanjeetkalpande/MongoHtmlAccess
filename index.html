@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body style="background-color: lightblue">
+
+<div class="container" >
+  <h2>Search Costumer Data</h2>
+  <form class="form-inline" style="background-color: lightpink">
+    <div class="form-group" style="padding-left: 5px">
+      <label for="text">Name:</label>
+      <input type="text" class="form-control" id="name" placeholder="Enter Name">
+    </div>
+    <div class="form-group" style="padding-left: 20px">
+      <label for="phone">Phone:</label>
+      <input type="phone" class="form-control" id="phone" placeholder="Enter Phone">
+    </div>
+    <div class="form-group" style="padding-left: 20px">
+      <label for="email">Email:</label>
+      <input type="email" class="form-control" id="email" placeholder="Enter email">
+    </div>
+    <div class="form-group" style="padding-left: 40px">
+    <button type="submit" class="btn btn-default">Search Details</button>        
+    </div>
+  </form>
+</div>
+<br>
+<div class="container" >
+<h5>Searched result:</h5>            
+  <table class="table table-bordered" style="background-color: lightgreen">
+    <!-- <thead>
+      <tr>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td></td>
+      </tr>
+    </tbody> -->
+  </table>
+</div>
+
+</body>
+<script>
+    var mongo = require('mongodb');
+    var MongoClient = mongo.MongoClient;
+    var url = "mongodb://localhost:27017/";
+
+
+
+    document.querySelector('form').addEventListener('submit', submitForm);
+
+    function submitForm(e){
+      e.preventDefault();
+      const nameValue = document.querySelector('#name').value;
+      const phoneValue = document.querySelector('#phone').value;
+      const emailValue = document.querySelector('#email').value;
+      const table = document.querySelector('table');
+      console.log(nameValue , phoneValue , emailValue);
+      table.innerHTML = "";
+
+      MongoClient.connect(url,{useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
+      if (err) throw err;
+      var dbo = db.db('VKcontrol');
+      var query = {}
+
+      if (nameValue && phoneValue && emailValue) {
+            query = {'Name':new RegExp(nameValue,"i"), 'Contact Number':new RegExp(phoneValue,"i"), 'E-mail ID':new RegExp(new RegExp(emailValue),"i")};
+        } else if (nameValue && phoneValue) {
+            query = {'Name':new RegExp(nameValue,"i"), 'Contact Number':new RegExp(phoneValue,"i")};
+        } else if (nameValue && emailValue) {
+            query = {'Name':new RegExp(nameValue,"i"), 'E-mail ID':new RegExp(new RegExp(emailValue),"i")};
+        } else if (emailValue && phoneValue) {
+            query = {'Contact Number':new RegExp(phoneValue,"i"), 'E-mail ID':new RegExp(new RegExp(emailValue),"i")};
+        } else if (nameValue) {
+            query = {'Name': new RegExp(nameValue,"i")};
+        } else if (emailValue) {
+            query = {'E-mail ID':new RegExp(new RegExp(emailValue),"i")};
+        } else if (phoneValue) {
+            query = {'Contact Number':new RegExp(phoneValue,"i")};
+        } 
+        console.log(query)
+        dbo.collection("customers").find(query).toArray(function(err, result) {
+        if (err) throw err;
+        if (typeof result !== 'undefined' && result.length > 0) {
+        keysArr = (Object.keys(result[0])).reverse();
+        console.log(result.length)
+       var thead = document.createElement('thead');
+        var tr = document.createElement('tr');
+        for (i in keysArr) {
+            var th = document.createElement('th'); //column
+            var text = document.createTextNode(keysArr[i]); //cell
+            th.appendChild(text);
+            tr.appendChild(th);
+        }
+        thead.appendChild(tr);
+        table.appendChild(thead);
+        var tbody = document.createElement('tbody');
+        for (var i = 0; i < result.length; i++) {
+            var tr = document.createElement('tr'); // row
+            rowDict = result[i];
+            for (var j = 0; j < keysArr.length-1; j++) {
+                var td = document.createElement('td'); //column
+                var text = document.createTextNode(rowDict[keysArr[j]]); //cell
+                td.appendChild(text);
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+
+        db.close();
+    }
+      });
+
+     });
+      
+    }
+  </script>
+</html>
